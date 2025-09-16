@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 20px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        .location-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .coordinates {
+            display: none;
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .coord-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .coord-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 1.1em;
+        }
+
+        .coord-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            color: #2d3748;
+            background: #edf2f7;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .coord-value:hover {
+            background: #e2e8f0;
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #822727;
+            border: 1px solid #feb2b2;
+        }
+
+        .status.info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .accuracy-info {
+            font-size: 0.9em;
+            color: #718096;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .coord-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .coord-value {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="location-icon">📍</div>
+        <h1>Location Tracker</h1>
+        
+        <div id="status" class="status info">
+            Click "Get My Location" to access your precise coordinates
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Getting your location...</p>
+        </div>
+
+        <div id="coordinates" class="coordinates">
+            <div class="coord-row">
+                <span class="coord-label">Latitude:</span>
+                <span id="latitude" class="coord-value">-</span>
+            </div>
+            <div class="coord-row">
+                <span class="coord-label">Longitude:</span>
+                <span id="longitude" class="coord-value">-</span>
+            </div>
+            <div id="accuracy" class="accuracy-info"></div>
+        </div>
+
+        <button id="getLocationBtn" class="refresh-btn">Get My Location</button>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const loadingEl = document.getElementById('loading');
+        const coordinatesEl = document.getElementById('coordinates');
+        const latitudeEl = document.getElementById('latitude');
+        const longitudeEl = document.getElementById('longitude');
+        const accuracyEl = document.getElementById('accuracy');
+        const getLocationBtn = document.getElementById('getLocationBtn');
+
+        function showStatus(message, type) {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+        }
+
+        function showLoading() {
+            loadingEl.style.display = 'block';
+            getLocationBtn.style.display = 'none';
+            statusEl.style.display = 'none';
+        }
+
+        function hideLoading() {
+            loadingEl.style.display = 'none';
+            getLocationBtn.style.display = 'inline-block';
+        }
+
+        function displayCoordinates(lat, lng, accuracy) {
+            latitudeEl.textContent = lat;
+            longitudeEl.textContent = lng;
+            
+            if (accuracy) {
+                accuracyEl.textContent = `Accuracy: ±${Math.round(accuracy)} meters`;
+                accuracyEl.style.display = 'block';
+            }
+            
+            coordinatesEl.style.display = 'block';
+            showStatus('Location found successfully!', 'success');
+        }
+
+        function getLocation() {
+            if (!navigator.geolocation) {
+                showStatus('Geolocation is not supported by this browser.', 'error');
+                return;
+            }
+
+            showLoading();
+
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            };
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    hideLoading();
+                    const lat = position.coords.latitude.toFixed(15);
+                    const lng = position.coords.longitude.toFixed(15);
+                    const accuracy = position.coords.accuracy;
+                    
+                    displayCoordinates(lat, lng, accuracy);
+                    
+                    console.log('Precise Coordinates:', { lat, lng, accuracy });
+                },
+                function(error) {
+                    hideLoading();
+                    let message = 'Unable to retrieve your location. ';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            message += 'Location access denied by user.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message += 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            message += 'Location request timed out.';
+                            break;
+                        default:
+                            message += 'An unknown error occurred.';
+                            break;
+                    }
+                    
+                    showStatus(message, 'error');
+                },
+                options
+            );
+        }
+
+        // Add click event to coordinates for easy copying
+        latitudeEl.addEventListener('click', function() {
+            navigator.clipboard.writeText(this.textContent);
+            showStatus('Latitude copied to clipboard!', 'success');
+        });
+
+        longitudeEl.addEventListener('click', function() {
+            navigator.clipboard.writeText(this.textContent);
+            showStatus('Longitude copied to clipboard!', 'success');
+        });
+
+        // Button event listener
+        getLocationBtn.addEventListener('click', getLocation);
+
+        // Auto-request location on page load
+        window.addEventListener('load', function() {
+            // Small delay to ensure page is fully rendered
+            setTimeout(getLocation, 500);
+        });
+    </script>
+</body>
+</html>
