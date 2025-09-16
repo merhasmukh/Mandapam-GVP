@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h2>Mark Your Attendance</h2>
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div id="locationStatus" class="alert" style="display: none;"></div>
+            <form method="POST" id="attendanceForm">
+                {% csrf_token %}
+                <input type="hidden" name="latitude" id="latitude">
+                <input type="hidden" name="longitude" id="longitude">
+                <button type="button" onclick="getLocation()" class="btn btn-primary btn-lg mt-4" id="locationBtn">Get Location & Mark Attendance</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showStatus(message, type) {
+    const statusDiv = document.getElementById('locationStatus');
+    statusDiv.textContent = message;
+    statusDiv.className = `alert alert-${type}`;
+    statusDiv.style.display = 'block';
+}
+
+function getLocation() {
+    if (!navigator.geolocation) {
+        showStatus('Geolocation is not supported by your browser', 'danger');
+        return;
+    }
+
+    showStatus('Requesting location access...', 'info');
+    
+    navigator.geolocation.getCurrentPosition(
+        // Success callback
+        (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Send location data to the server
+            fetch('/attendance/api/check-location/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ latitude, longitude })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.is_inside) {
+                        showStatus(`✅ You are within the allowed range! Distance: ${data.distance} meters`, 'success');
+                    } else {
+                        showStatus(`❌ You are too far! Distance: ${data.distance} meters`, 'danger');
+                    }
+                } else {
+                    showStatus(`Error: ${data.message}`, 'danger');
+                }
+            })
+            .catch(error => {
+                showStatus('An error occurred while validating your location.', 'danger');
+            });
+        },
+        // Error callback
+        (error) => {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    showStatus('Location permission denied. Please allow location access to mark attendance.', 'danger');
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    showStatus('Location information is unavailable.', 'danger');
+                    break;
+                case error.TIMEOUT:
+                    showStatus('Location request timed out.', 'warning');
+                    break;
+                default:
+                    showStatus('An unknown error occurred while getting location.', 'danger');
+                    break;
+            }
+        },
+        // Options
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+</script>
+{% endblock %}
