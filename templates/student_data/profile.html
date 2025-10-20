@@ -1,0 +1,112 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="text-primary">Welcome to the Student Dashboard</h1>
+                    <p class="text-muted">Manage your attendance and access important features from here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Management Section -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5>Manage Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'student_profile' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="course" class="form-label">Course</label>
+                            <select class="form-select" id="course" name="course" required>
+                                <option value="">Select a course</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="semester" class="form-label">Semester</label>
+                            <select class="form-select" id="semester" name="semester" required>
+                                <option value="">Select a semester</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Update Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const courseDropdown = document.getElementById('course');
+        const semesterDropdown = document.getElementById('semester');
+
+        // Fetch student profile data
+        fetch('/student_dashboard/get_student_profile/')
+            .then(response => response.json())
+            .then(data => {
+                // Populate course dropdown
+                fetch('/api/courses/')
+                    .then(response => response.json())
+                    .then(courses => {
+                        courses.forEach(course => {
+                            const option = document.createElement('option');
+                            option.value = course.id; // Use course.id as the value
+                            option.textContent = course.name;
+                            if (data.course && course.id === data.course.id) {
+                                option.selected = true; // Pre-select the student's course
+                            }
+                            courseDropdown.appendChild(option);
+                        });
+                    });
+
+                // Populate semester dropdown based on the student's course
+                if (data.course) {
+                    fetch(`/api/semesters/${data.course.id}/`)
+                        .then(response => response.json())
+                        .then(semesters => {
+                            semesters.forEach(semester => {
+                                const option = document.createElement('option');
+                                option.value = semester.id; // Use semester.id as the value
+                                option.textContent = `Semester ${semester.semester_number}`;
+                                if (data.semester && semester.id === data.semester.id) {
+                                    option.selected = true; // Pre-select the student's semester
+                                }
+                                semesterDropdown.appendChild(option);
+                            });
+                        });
+                }
+            });
+
+        // Update semesters dynamically when course changes
+        courseDropdown.addEventListener('change', function () {
+            const courseId = this.value; // Get the selected course ID
+
+            // Clear existing semesters
+            semesterDropdown.innerHTML = '<option value="">Select a semester</option>';
+
+            if (courseId) {
+                fetch(`/api/semesters/${courseId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(semester => {
+                            const option = document.createElement('option');
+                            option.value = semester.id; // Use semester.id as the value
+                            option.textContent = `Semester ${semester.semester_number}`;
+                            semesterDropdown.appendChild(option);
+                        });
+                    });
+            }
+        });
+    });
+</script>
+{% endblock %}
