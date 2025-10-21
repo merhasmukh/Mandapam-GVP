@@ -1,24 +1,24 @@
-{% extends 'base.html' %}
+{% extends 'base_dashboard.html' %}
 
 {% block title %}Check Location{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center">Check Your Location</h1>
+<div class="container mt-5" style="max-width: 500px;">
+    <h1 class="text-center mb-4">Your Location</h1>
 
     <div id="loadingMessage" class="alert alert-info text-center" style="display: none;">
         Fetching your location, please wait...
     </div>
 
-    <div id="locationResult" style="display: none;">
-        <div id="statusBox" class="status-box"></div>
-        <div id="coordsBox" class="alert alert-secondary"></div>
+    <div id="coordsBox" class="alert alert-secondary text-center" style="display: none;">
+        <strong>Latitude:</strong> <span id="latitude">-</span><br>
+        <strong>Longitude:</strong> <span id="longitude">-</span>
     </div>
 
     <div id="errorMessage" class="alert alert-danger text-center" style="display: none;"></div>
 
     <div class="text-center mt-4">
-        <button id="checkAgainBtn" class="btn btn-primary">Check Again</button>
+        <button id="getLocationBtn" class="btn btn-primary">Get My Location</button>
     </div>
 </div>
 {% endblock %}
@@ -27,15 +27,30 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const loadingMessage = document.getElementById('loadingMessage');
-        const locationResult = document.getElementById('locationResult');
-        const statusBox = document.getElementById('statusBox');
         const coordsBox = document.getElementById('coordsBox');
         const errorMessage = document.getElementById('errorMessage');
-        const checkAgainBtn = document.getElementById('checkAgainBtn');
+        const getLocationBtn = document.getElementById('getLocationBtn');
+        const latitudeEl = document.getElementById('latitude');
+        const longitudeEl = document.getElementById('longitude');
 
-        function checkLocation() {
+        function showError(message) {
+            loadingMessage.style.display = 'none';
+            coordsBox.style.display = 'none';
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = message;
+        }
+
+        function showCoords(lat, lng) {
+            loadingMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            coordsBox.style.display = 'block';
+            latitudeEl.textContent = lat;
+            longitudeEl.textContent = lng;
+        }
+
+        function getLocation() {
             loadingMessage.style.display = 'block';
-            locationResult.style.display = 'none';
+            coordsBox.style.display = 'none';
             errorMessage.style.display = 'none';
 
             if (!navigator.geolocation) {
@@ -44,116 +59,36 @@
             }
 
             navigator.geolocation.getCurrentPosition(
-                handleSuccess,
-                handleError,
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    showCoords(lat, lng);
+                },
+                function(error) {
+                    let errorMsg;
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = "Location access was denied. Please allow location access.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = "Location information is unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = "Location request timed out.";
+                            break;
+                        default:
+                            errorMsg = "An unknown error occurred.";
+                    }
+                    showError(errorMsg);
+                },
                 { enableHighAccuracy: true }
             );
         }
 
-        async function handleSuccess(position) {
-            const { latitude, longitude } = position.coords;
+        getLocationBtn.addEventListener('click', getLocation);
 
-            try {
-                const formData = new FormData();
-                formData.append('latitude', latitude);
-                formData.append('longitude', longitude);
-
-                const response = await fetch('{% url "check_location_api" %}', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
-                }
-
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Invalid response format: Expected JSON');
-                }
-
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    showResult(data, latitude, longitude);
-                } else {
-                    showError(data.message || 'An error occurred');
-                }
-            } catch (error) {
-                showError('Failed to check location: ' + error.message);
-                console.error('Error details:', error);
-            }
-        }
-
-        function showResult(data, latitude, longitude) {
-            loadingMessage.style.display = 'none';
-            locationResult.style.display = 'block';
-
-            statusBox.className = 'status-box ' + (data.is_inside ? 'status-inside' : 'status-outside');
-            statusBox.innerHTML = `
-                <h3>${data.is_inside ? '✅ Inside Range' : '❌ Outside Range'}</h3>
-                <p>Distance: ${data.distance} meters</p>
-                <p>Maximum allowed: ${data.max_radius} meters</p>
-                <p>Location Name: ${data.location_name}</p>
-                <p>${data.is_on_time ? '✅ On Time' : '❌ Late'}</p>
-                <p>Time Difference: ${data.time_difference.hours} hours, ${data.time_difference.minutes} minutes, ${data.time_difference.seconds} seconds</p>
-            `;
-
-            coordsBox.innerHTML = `
-                <strong>Your Coordinates:</strong><br>
-                Latitude: ${latitude}<br>
-                Longitude: ${longitude}
-            `;
-        }
-
-        function handleError(error) {
-            let errorMsg;
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    errorMsg = "Location access was denied. Please allow location access to check your position.";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    errorMsg = "Location information is unavailable.";
-                    break;
-                case error.TIMEOUT:
-                    errorMsg = "Location request timed out.";
-                    break;
-                default:
-                    errorMsg = "An unknown error occurred.";
-            }
-            showError(errorMsg);
-        }
-
-        function showError(message) {
-            loadingMessage.style.display = 'none';
-            locationResult.style.display = 'none';
-            errorMessage.style.display = 'block';
-            errorMessage.textContent = message;
-        }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        // Start location check immediately when page loads
-        checkLocation();
-
-        // Allow manual rechecks
-        checkAgainBtn.addEventListener('click', checkLocation);
+        // Optionally, auto-fetch on page load:
+        // getLocation();
     });
 </script>
 {% endblock %}

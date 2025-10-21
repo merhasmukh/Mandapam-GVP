@@ -65,9 +65,13 @@
         <a href="{% url 'check_location_api' %}" class="{% if request.resolver_match.url_name == 'check_location_api' %}active{% endif %}">
             <i class="fas fa-map-marker-alt me-2"></i>Check Location
         </a>
+        <a href="{% url 'mark_attendance' %}" class="{% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}">
+            <i class="fas fa-clipboard-check me-2"></i>Mark Attendance
+        </a>
         <a href="#" class="{% if request.resolver_match.url_name == 'view_attendance' %}active{% endif %}">
             <i class="fas fa-file-alt me-2"></i>View Attendance
         </a>
+
          <a href="{% url 'student_profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
             <i class="fas fa-user me-2"></i>Profile
         </a>

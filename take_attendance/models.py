@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 # Create your models here.
 
@@ -12,3 +13,17 @@ class PrathanaLocation(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+
+
+class Attendance(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    date = models.DateField()
+    time = models.TimeField()
+    present = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date} - {'Present' if self.present else 'Absent'}"

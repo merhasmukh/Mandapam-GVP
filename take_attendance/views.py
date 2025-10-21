@@ -4,8 +4,7 @@ from .services.distance_cal import calculate_distance
 from .services.time_cal import calculate_time_difference, is_time_within_range
 from pytz import timezone
 import logging
-
-from .models import PrathanaLocation
+from .models import PrathanaLocation, Attendance
 from datetime import datetime
 
 def get_location(request):
@@ -123,3 +122,25 @@ def check_location_view(request):
 
     # Handle GET request
     return render(request, 'take_attendance/check_location.html')
+
+
+def mark_attendance(request):
+    if request.method == "POST":
+        user = request.user
+        # Get user location data from the request
+        latitude = request.POST.get('latitude')
+        longitude = request.POST.get('longitude')
+
+        # Save attendance record
+        Attendance.objects.create(
+            user=user,
+            date=timezone.now().date(),
+            time=timezone.now().time(),
+            present=True,
+        )
+        # Logic to mark attendance can be added here
+        return JsonResponse({
+            "status": "success",
+            "message": "Attendance marked successfully."
+        })
+    return render(request, 'take_attendance/mark_attendance.html')

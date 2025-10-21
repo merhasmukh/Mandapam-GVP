@@ -4,24 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Location Tracker</title>
+    {% block extra_css %}
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #333;
-        }
-
-        .container {
+        .location-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
@@ -31,26 +16,17 @@
             width: 90%;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 40px auto;
         }
-
-        h1 {
-            font-size: 2.2em;
-            margin-bottom: 20px;
-            color: #4a5568;
-            font-weight: 600;
-        }
-
         .location-icon {
             font-size: 4em;
             margin-bottom: 20px;
             color: #667eea;
         }
-
         .loading {
             display: none;
             margin: 20px 0;
         }
-
         .spinner {
             width: 50px;
             height: 50px;
@@ -60,12 +36,10 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
         .coordinates {
             display: none;
             background: #f7fafc;
@@ -74,7 +48,6 @@
             margin: 20px 0;
             border-left: 4px solid #667eea;
         }
-
         .coord-row {
             display: flex;
             justify-content: space-between;
@@ -85,13 +58,11 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
-
         .coord-label {
             font-weight: 600;
             color: #4a5568;
             font-size: 1.1em;
         }
-
         .coord-value {
             font-family: 'Courier New', monospace;
             font-size: 1em;
@@ -102,36 +73,30 @@
             cursor: pointer;
             transition: background-color 0.2s;
         }
-
         .coord-value:hover {
             background: #e2e8f0;
         }
-
         .status {
             margin: 20px 0;
             padding: 15px;
             border-radius: 8px;
             font-weight: 500;
         }
-
         .status.success {
             background: #c6f6d5;
             color: #22543d;
             border: 1px solid #9ae6b4;
         }
-
         .status.error {
             background: #fed7d7;
             color: #822727;
             border: 1px solid #feb2b2;
         }
-
         .status.info {
             background: #bee3f8;
             color: #2a4365;
             border: 1px solid #90cdf4;
         }
-
         .refresh-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -144,46 +109,41 @@
             transition: transform 0.2s, box-shadow 0.2s;
             margin-top: 20px;
         }
-
         .refresh-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
-
         .refresh-btn:active {
             transform: translateY(0);
         }
-
         .accuracy-info {
             font-size: 0.9em;
             color: #718096;
             margin-top: 15px;
             font-style: italic;
         }
-
         @media (max-width: 480px) {
-            .container {
+            .location-container {
                 padding: 30px 20px;
             }
-            
             h1 {
                 font-size: 1.8em;
             }
-            
             .coord-row {
                 flex-direction: column;
                 gap: 10px;
             }
-            
             .coord-value {
                 width: 100%;
                 text-align: center;
             }
         }
     </style>
+    {% endblock %}
 </head>
 <body>
-    <div class="container">
+    {% block content %}
+    <div class="location-container">
         <div class="location-icon">📍</div>
         <h1>Location Tracker</h1>
         
@@ -210,7 +170,9 @@
 
         <button id="getLocationBtn" class="refresh-btn">Get My Location</button>
     </div>
+    {% endblock %}
 
+    {% block extra_js %}
     <script>
         const statusEl = document.getElementById('status');
         const loadingEl = document.getElementById('loading');
@@ -301,24 +263,24 @@
         }
 
         // Add click event to coordinates for easy copying
-        latitudeEl.addEventListener('click', function() {
-            navigator.clipboard.writeText(this.textContent);
-            showStatus('Latitude copied to clipboard!', 'success');
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            latitudeEl.addEventListener('click', function() {
+                navigator.clipboard.writeText(this.textContent);
+                showStatus('Latitude copied to clipboard!', 'success');
+            });
 
-        longitudeEl.addEventListener('click', function() {
-            navigator.clipboard.writeText(this.textContent);
-            showStatus('Longitude copied to clipboard!', 'success');
-        });
+            longitudeEl.addEventListener('click', function() {
+                navigator.clipboard.writeText(this.textContent);
+                showStatus('Longitude copied to clipboard!', 'success');
+            });
 
-        // Button event listener
-        getLocationBtn.addEventListener('click', getLocation);
+            // Button event listener
+            getLocationBtn.addEventListener('click', getLocation);
 
-        // Auto-request location on page load
-        window.addEventListener('load', function() {
-            // Small delay to ensure page is fully rendered
+            // Auto-request location on page load
             setTimeout(getLocation, 500);
         });
     </script>
+    {% endblock %}
 </body>
 </html>
