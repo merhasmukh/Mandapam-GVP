@@ -13,7 +13,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 # filepath: attendance_sys/settings.py
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,10 +26,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1b!&0^mat8=(+$#0@%bv%3hus4so_ojmt2nl%y46up-5h&!lp#'
-
+SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
+DEBUG = os.getenv('DEBUG', 'False') == 'True'  # Convert string to boolean
 
 ALLOWED_HOSTS = []
 
@@ -142,7 +144,7 @@ LOGIN_REDIRECT_URL = 'home'
 
 # Specify the site ID
 SITE_ID = 1
-
+ACCOUNT_ADAPTER = 'authentication.adapters.MyAccountAdapter'
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Default backend

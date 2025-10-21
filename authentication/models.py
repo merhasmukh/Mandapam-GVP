@@ -5,6 +5,7 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         ('student', 'Student'),
         ('cr', 'Class Representative'),
+        ('staff', 'Staff'),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
     course = models.ForeignKey(Course, on_delete=models.SET_NULL, blank=True, null=True)
