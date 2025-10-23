@@ -6,10 +6,13 @@ from pytz import timezone
 import logging
 from .models import PrathanaLocation, Attendance
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def get_location(request):
     return render(request, "take_attendance/get_location.html")
 
+@login_required
 def check_location_view(request):
     if request.method == 'POST':
         lat = request.POST.get('latitude')
@@ -123,7 +126,7 @@ def check_location_view(request):
     # Handle GET request
     return render(request, 'take_attendance/check_location.html')
 
-
+@login_required
 def mark_attendance(request):
     if request.method == "POST":
         user = request.user

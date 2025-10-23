@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import Course, Semester
 # Create your views here.
+@login_required
 def student_dashboard(request):
     return render(request, 'student_data/student_dashboard.html')
 

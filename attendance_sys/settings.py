@@ -156,6 +156,7 @@ LOGOUT_REDIRECT_URL = '/'  # Redirect after logout
 LOGIN_REDIRECT_URL = '/student_dashboard/'  # Update this to the correct URL for the student dashboard
 # Optional: Configure email verification (if needed)
 ACCOUNT_EMAIL_VERIFICATION = "none"
+LOGIN_URL = 'home'
 ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 SOCIALACCOUNT_LOGIN_ON_GET = True
